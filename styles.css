@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  background: #051643;
+}
+
+.hero__layer-stack {
+  position: absolute;
+  inset: 0;
+}
+
+.hero__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero__layer--background {
+  z-index: 1;
+}
+
+.hero__layer--high-hand {
+  z-index: 2;
+}
+
+.hero__layer--base-hand {
+  z-index: 3;
+}
+
+.hero__layer--text {
+  z-index: 4;
+}
+
+@supports (height: 100dvh) {
+  .hero {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+}
