@@ -3,6 +3,20 @@
   margin: 0;
 }
 
+:root {
+  --foreground: 200 20% 95%;
+  --primary: 199 89% 48%;
+  --background: 210 50% 5%;
+  --radius: 0.9rem;
+  --hero-text-gap-x: clamp(1rem, 8vw, 7rem);
+  --hero-text-gap-y: clamp(1rem, 6vw, 5rem);
+  --hero-text-width: clamp(16rem, 48vw, 42rem);
+  --hero-text-offset-y: clamp(-7rem, -12vh, -2.5rem);
+  --hero-button-gap-x: clamp(0.85rem, 3.5vw, 4rem);
+  --hero-button-gap-y: clamp(0.7rem, 3vw, 3rem);
+  --hero-button-radius: clamp(0.9rem, 2.2vw, 1.75rem);
+}
+
 html,
 body {
   min-height: 100%;
@@ -45,13 +59,138 @@ body {
   z-index: 3;
 }
 
-.hero__layer--text {
+.hero__text-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(var(--hero-text-width), calc(100vw - (var(--hero-text-gap-x) * 2)));
+  aspect-ratio: 1350 / 594;
+  transform: translate(-50%, calc(-50% + var(--hero-text-offset-y)));
   z-index: 4;
+  pointer-events: none;
+  will-change: transform;
+  overflow: visible;
+}
+
+.hero__layer--text {
+  z-index: auto;
+  inset: auto;
+  left: calc(-100% * (1235 / 1350));
+  top: calc(-100% * (579 / 594));
+  width: calc(100% * (3840 / 1350));
+  height: calc(100% * (2160 / 594));
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+  transform-origin: center center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.2rem;
+  min-width: min(100%, 14rem);
+  padding: 0.9rem 1.8rem;
+  border: 0;
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  transition: transform 0.25s ease-out, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.btn.magnetic {
+  will-change: transform;
+  transform: translate3d(0px, 0px, 0px);
+  contain: layout style paint;
+}
+
+.btn-glass {
+  border: 1px solid hsl(var(--foreground) / 0.18);
+  background: hsl(var(--foreground) / 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-glass:hover,
+.btn-glass:focus-visible {
+  outline: none;
+}
+
+.btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--background));
+  font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: hsl(var(--primary) / 0.9);
+  outline: none;
+}
+
+.hero__text-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1rem;
+  height: 1rem;
+  z-index: 5;
+  cursor: pointer;
+  appearance: none;
+  overflow: visible;
+  transform-origin: center center;
+  touch-action: manipulation;
+  will-change: transform, opacity;
+  --glass-x: 50%;
+  --glass-y: 50%;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.hero__text-button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 0.4rem;
+  border-radius: var(--hero-button-radius);
+}
+
+.hero__text-glass {
+  display: none;
 }
 
 @supports (height: 100dvh) {
   .hero {
     min-height: 100dvh;
     height: 100dvh;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --hero-text-gap-x: clamp(1.1rem, 11vw, 2.2rem);
+    --hero-text-gap-y: clamp(1rem, 8vw, 1.8rem);
+    --hero-text-width: clamp(12.5rem, 72vw, 18rem);
+    --hero-text-offset-y: clamp(-2rem, -4vh, -0.75rem);
+    --hero-button-gap-x: clamp(0.7rem, 4.8vw, 1.4rem);
+    --hero-button-gap-y: clamp(0.6rem, 4vw, 1.1rem);
+    --hero-button-radius: clamp(0.8rem, 4vw, 1.15rem);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --hero-text-gap-x: clamp(1rem, 9vw, 3rem);
+    --hero-text-gap-y: clamp(0.9rem, 7vw, 2.2rem);
+    --hero-text-width: clamp(14rem, 62vw, 24rem);
+    --hero-text-offset-y: clamp(-2.4rem, -5vh, -0.85rem);
   }
 }
