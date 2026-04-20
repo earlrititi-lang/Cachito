@@ -13,6 +13,67 @@ if (window.gsap) {
   let boundsFrame = null;
 
   if (hero && textStage && textButton && textArt) {
+    // Configura aquí la salida de cada capa sin buscar tweens por el archivo.
+    const dismissalMotion = {
+      // Background zoom during dismissal.
+      background: {
+        scale: 1.14,
+        duration: 2.4,
+        ease: "sine.inOut",
+        at: 0.04,
+      },
+      highHand: {
+        transformOrigin: "56.4% 99.9%",
+        // Swapped from baseHand: immediate visible opening.
+        open: {
+          scale: 1.01,
+          rotation: 0,
+          xPercent: 6,
+          yPercent: 2.4,
+          x: 0,
+          y: 0,
+          duration: 0.9,
+          ease: "power3.out",
+          at: 0,
+        },
+        // Swapped from baseHand: long diagonal fall toward the bottom-left.
+        exit: {
+          scale: 1.08,
+          rotation: -45,
+          xPercent: -18,
+          yPercent: 82,
+          x: () => window.innerWidth * -0.7,
+          y: () => window.innerHeight * 1.02,
+          duration: 2.45,
+          ease: "power1.inOut",
+          delayAfterOpen: 0.22,
+        },
+      },
+      baseHand: {
+        transformOrigin: "22% 12%",
+        // Swapped from highHand: immediate small kick on the first frame.
+        press: {
+          scale: 1.01,
+          yPercent: 0.6,
+          duration: 0.2,
+          ease: "power2.out",
+          at: 0,
+        },
+        // Swapped from highHand: compact exit arc toward the bottom-right.
+        exit: {
+          scale: 1.08,
+          rotation: 90,
+          xPercent: 42,
+          yPercent: 96,
+          x: () => window.innerWidth * 0.9,
+          y: () => window.innerHeight * 1.02,
+          duration: 1.75,
+          ease: "power2.inOut",
+          at: 0.34,
+        },
+      },
+    };
+
     gsap.set([textStage, textButton, textArt], { force3D: true });
     gsap.set(backgroundLayer, {
       force3D: true,
@@ -20,11 +81,13 @@ if (window.gsap) {
     });
     gsap.set(highHandLayer, {
       force3D: true,
-      transformOrigin: "22% 12%",
+      transformOrigin: dismissalMotion.highHand.transformOrigin,
+      x: 0,
+      y: 0,
     });
     gsap.set(baseHandLayer, {
       force3D: true,
-      transformOrigin: "22% 12%",
+      transformOrigin: dismissalMotion.baseHand.transformOrigin,
       x: 0,
       y: 0,
     });
@@ -201,6 +264,10 @@ if (window.gsap) {
       const timeline = gsap.timeline({
         defaults: { overwrite: true },
       });
+      const highHandExitAt =
+        dismissalMotion.highHand.open.at +
+        dismissalMotion.highHand.open.duration +
+        dismissalMotion.highHand.exit.delayAfterOpen;
 
       timeline
         .to(textArt, {
@@ -210,11 +277,11 @@ if (window.gsap) {
           duration: 0.12,
           ease: "power2.out",
         }, 0)
-        .to(highHandLayer, {
-          scale: 1.01,
-          yPercent: 0.6,
-          duration: 0.2,
-          ease: "power2.out",
+        .to(baseHandLayer, {
+          scale: dismissalMotion.baseHand.press.scale,
+          yPercent: dismissalMotion.baseHand.press.yPercent,
+          duration: dismissalMotion.baseHand.press.duration,
+          ease: dismissalMotion.baseHand.press.ease,
         }, 0)
         .to(textButton, {
           x: 0,
@@ -236,28 +303,42 @@ if (window.gsap) {
           pointerEvents: "none",
         }, 0.08)
         .to(backgroundLayer, {
-          scale: 1.14,
-          duration: 2.4,
-          ease: "sine.inOut",
-        }, 0.04)
-        .to(baseHandLayer, {
-          scale: 1.08,
-          rotation: 45,
-          xPercent: 18,
-          yPercent: 82,
-          x: () => window.innerWidth * 0.7,
-          y: () => window.innerHeight * 1.02,
-          duration: 2.45,
-          ease: "power1.inOut",
-        }, 0.12)
+          scale: dismissalMotion.background.scale,
+          duration: dismissalMotion.background.duration,
+          ease: dismissalMotion.background.ease,
+        }, dismissalMotion.background.at)
+        // highHand now gets baseHand's open + long diagonal exit behavior.
         .to(highHandLayer, {
-          scale: 1.08,
-          rotation: -90,
-          xPercent: -24,
-          yPercent: 88,
-          duration: 1.08,
-          ease: "power2.inOut",
-        }, 0.34)
+          scale: dismissalMotion.highHand.open.scale,
+          rotation: dismissalMotion.highHand.open.rotation,
+          xPercent: dismissalMotion.highHand.open.xPercent,
+          yPercent: dismissalMotion.highHand.open.yPercent,
+          x: dismissalMotion.highHand.open.x,
+          y: dismissalMotion.highHand.open.y,
+          duration: dismissalMotion.highHand.open.duration,
+          ease: dismissalMotion.highHand.open.ease,
+        }, dismissalMotion.highHand.open.at)
+        .to(highHandLayer, {
+          scale: dismissalMotion.highHand.exit.scale,
+          rotation: dismissalMotion.highHand.exit.rotation,
+          xPercent: dismissalMotion.highHand.exit.xPercent,
+          yPercent: dismissalMotion.highHand.exit.yPercent,
+          x: dismissalMotion.highHand.exit.x,
+          y: dismissalMotion.highHand.exit.y,
+          duration: dismissalMotion.highHand.exit.duration,
+          ease: dismissalMotion.highHand.exit.ease,
+        }, highHandExitAt)
+        // baseHand now gets highHand's compact exit behavior.
+        .to(baseHandLayer, {
+          scale: dismissalMotion.baseHand.exit.scale,
+          rotation: dismissalMotion.baseHand.exit.rotation,
+          xPercent: dismissalMotion.baseHand.exit.xPercent,
+          yPercent: dismissalMotion.baseHand.exit.yPercent,
+          x: dismissalMotion.baseHand.exit.x,
+          y: dismissalMotion.baseHand.exit.y,
+          duration: dismissalMotion.baseHand.exit.duration,
+          ease: dismissalMotion.baseHand.exit.ease,
+        }, dismissalMotion.baseHand.exit.at)
         .to(textStage, {
           opacity: 0,
           duration: 0.22,
@@ -295,8 +376,6 @@ if (window.gsap) {
     textButton.addEventListener("pointerdown", () => {
       startDismissal();
     });
-
-    textButton.addEventListener("pointerup", resetPress);
 
     textButton.addEventListener("click", () => {
       startDismissal();
