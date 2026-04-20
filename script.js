@@ -24,7 +24,9 @@ if (window.gsap) {
     });
     gsap.set(baseHandLayer, {
       force3D: true,
-      transformOrigin: "88% 10%",
+      transformOrigin: "22% 12%",
+      x: 0,
+      y: 0,
     });
 
     const readCssLength = (propertyName, fallback) => {
@@ -78,6 +80,8 @@ if (window.gsap) {
         scale: 1,
         xPercent: 0,
         yPercent: 0,
+        x: 0,
+        y: 0,
         rotation: 0,
         duration: 0.55,
         ease: "power2.out",
@@ -178,6 +182,90 @@ if (window.gsap) {
       }
     };
 
+    const startDismissal = () => {
+      if (dismissing) {
+        return;
+      }
+
+      dismissing = true;
+      textButton.disabled = true;
+
+      if (reduceMotion.matches) {
+        gsap.set([textButton, textStage], {
+          opacity: 0,
+          pointerEvents: "none",
+        });
+        return;
+      }
+
+      const timeline = gsap.timeline({
+        defaults: { overwrite: true },
+      });
+
+      timeline
+        .to(textArt, {
+          scaleX: 0.948,
+          scaleY: 0.908,
+          yPercent: 2.2,
+          duration: 0.12,
+          ease: "power2.out",
+        }, 0)
+        .to(highHandLayer, {
+          scale: 1.01,
+          yPercent: 0.6,
+          duration: 0.2,
+          ease: "power2.out",
+        }, 0)
+        .to(textButton, {
+          x: 0,
+          y: 0,
+          opacity: 0,
+          duration: 0.22,
+          ease: "power2.out",
+          pointerEvents: "none",
+        }, 0)
+        .to(textArt, {
+          xPercent: 0,
+          yPercent: 10,
+          rotation: 1.4,
+          scaleX: 0.84,
+          scaleY: 0.8,
+          opacity: 0,
+          duration: 0.5,
+          ease: "expo.inOut",
+          pointerEvents: "none",
+        }, 0.08)
+        .to(backgroundLayer, {
+          scale: 1.14,
+          duration: 2.4,
+          ease: "sine.inOut",
+        }, 0.04)
+        .to(baseHandLayer, {
+          scale: 1.08,
+          rotation: 45,
+          xPercent: 18,
+          yPercent: 82,
+          x: () => window.innerWidth * 0.7,
+          y: () => window.innerHeight * 1.02,
+          duration: 2.45,
+          ease: "power1.inOut",
+        }, 0.12)
+        .to(highHandLayer, {
+          scale: 1.08,
+          rotation: -90,
+          xPercent: -24,
+          yPercent: 88,
+          duration: 1.08,
+          ease: "power2.inOut",
+        }, 0.34)
+        .to(textStage, {
+          opacity: 0,
+          duration: 0.22,
+          ease: "power2.out",
+          pointerEvents: "none",
+        }, "<");
+    };
+
     textButton.addEventListener("pointerenter", () => {
       if (dismissing) {
         return;
@@ -205,112 +293,13 @@ if (window.gsap) {
     });
 
     textButton.addEventListener("pointerdown", () => {
-      if (dismissing) {
-        return;
-      }
-
-      gsap.to(textArt, {
-        scaleX: 0.948,
-        scaleY: 0.908,
-        yPercent: 2.2,
-        duration: 0.12,
-        ease: "power2.out",
-        overwrite: true,
-      });
-
-      gsap.to(backgroundLayer, {
-        scale: 1.006,
-        duration: 0.2,
-        ease: "power2.out",
-        overwrite: true,
-      });
-
-      gsap.to(highHandLayer, {
-        scale: 1.01,
-        yPercent: 0.6,
-        duration: 0.2,
-        ease: "power2.out",
-        overwrite: true,
-      });
-
-      gsap.to(baseHandLayer, {
-        scale: 1.014,
-        yPercent: 1,
-        duration: 0.2,
-        ease: "power2.out",
-        overwrite: true,
-      });
+      startDismissal();
     });
 
     textButton.addEventListener("pointerup", resetPress);
 
     textButton.addEventListener("click", () => {
-      if (dismissing) {
-        return;
-      }
-
-      dismissing = true;
-      textButton.disabled = true;
-
-      if (reduceMotion.matches) {
-        gsap.set([textButton, textStage], {
-          opacity: 0,
-          pointerEvents: "none",
-        });
-        return;
-      }
-
-      const timeline = gsap.timeline({
-        defaults: { overwrite: true },
-      });
-
-      timeline
-        .to(textButton, {
-          x: 0,
-          y: 0,
-          opacity: 0,
-          duration: 0.22,
-          ease: "power2.out",
-          pointerEvents: "none",
-        }, 0)
-        .to(textArt, {
-          xPercent: 0,
-          yPercent: 10,
-          rotation: 1.4,
-          scaleX: 0.84,
-          scaleY: 0.8,
-          opacity: 0,
-          duration: 0.5,
-          ease: "expo.inOut",
-          pointerEvents: "none",
-        }, 0)
-        .to(backgroundLayer, {
-          scale: 1.18,
-          duration: 0.9,
-          ease: "power3.inOut",
-        }, 0.04)
-        .to(baseHandLayer, {
-          scale: 1.18,
-          rotation: 90,
-          xPercent: 40,
-          yPercent: 108,
-          duration: 1.04,
-          ease: "power2.inOut",
-        }, 0.04)
-        .to(highHandLayer, {
-          scale: 1.08,
-          rotation: -90,
-          xPercent: -24,
-          yPercent: 88,
-          duration: 1.08,
-          ease: "power2.inOut",
-        }, 0.34)
-        .to(textStage, {
-          opacity: 0,
-          duration: 0.22,
-          ease: "power2.out",
-          pointerEvents: "none",
-        }, "<");
+      startDismissal();
     });
 
     syncButtonToStage();
