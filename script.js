@@ -23,7 +23,8 @@ if (window.gsap) {
         at: 0.04,
       },
       highHand: {
-        transformOrigin: "56.4% 99.9%",
+        // Lower-left corner of HighHand.svg opaque bounds.
+        transformOrigin: "17.24% 77.08%",
         // Swapped from baseHand: immediate visible opening.
         open: {
           scale: 1.01,
@@ -50,26 +51,24 @@ if (window.gsap) {
         },
       },
       baseHand: {
-        transformOrigin: "22% 12%",
-        // Swapped from highHand: immediate small kick on the first frame.
-        press: {
-          scale: 1.01,
-          yPercent: 0.6,
-          duration: 0.2,
-          ease: "power2.out",
+        // Lower-left corner of BaseHand.svg opaque bounds.
+        transformOrigin: "56.4% 99.9%",
+        // The hand starts rotating immediately, then its diagonal travel fades in without a mid-motion stop.
+        rotate: {
+          rotation: 70,
+          duration: 6.45,
+          ease: "none",
           at: 0,
         },
-        // Swapped from highHand: compact exit arc toward the bottom-right.
-        exit: {
+        travel: {
           scale: 1.08,
-          rotation: 90,
           xPercent: 42,
           yPercent: 96,
           x: () => window.innerWidth * 0.9,
           y: () => window.innerHeight * 1.02,
-          duration: 1.75,
-          ease: "power2.inOut",
-          at: 0.34,
+          duration: 7.05,
+          ease: "none",
+          at: 0.12,
         },
       },
     };
@@ -277,12 +276,6 @@ if (window.gsap) {
           duration: 0.12,
           ease: "power2.out",
         }, 0)
-        .to(baseHandLayer, {
-          scale: dismissalMotion.baseHand.press.scale,
-          yPercent: dismissalMotion.baseHand.press.yPercent,
-          duration: dismissalMotion.baseHand.press.duration,
-          ease: dismissalMotion.baseHand.press.ease,
-        }, 0)
         .to(textButton, {
           x: 0,
           y: 0,
@@ -328,17 +321,23 @@ if (window.gsap) {
           duration: dismissalMotion.highHand.exit.duration,
           ease: dismissalMotion.highHand.exit.ease,
         }, highHandExitAt)
-        // baseHand now gets highHand's compact exit behavior.
+        // baseHand rotation starts first; the diagonal exit overlaps immediately after with no keyframe stop.
         .to(baseHandLayer, {
-          scale: dismissalMotion.baseHand.exit.scale,
-          rotation: dismissalMotion.baseHand.exit.rotation,
-          xPercent: dismissalMotion.baseHand.exit.xPercent,
-          yPercent: dismissalMotion.baseHand.exit.yPercent,
-          x: dismissalMotion.baseHand.exit.x,
-          y: dismissalMotion.baseHand.exit.y,
-          duration: dismissalMotion.baseHand.exit.duration,
-          ease: dismissalMotion.baseHand.exit.ease,
-        }, dismissalMotion.baseHand.exit.at)
+          rotation: dismissalMotion.baseHand.rotate.rotation,
+          duration: dismissalMotion.baseHand.rotate.duration,
+          ease: dismissalMotion.baseHand.rotate.ease,
+          overwrite: false,
+        }, dismissalMotion.baseHand.rotate.at)
+        .to(baseHandLayer, {
+          scale: dismissalMotion.baseHand.travel.scale,
+          xPercent: dismissalMotion.baseHand.travel.xPercent,
+          yPercent: dismissalMotion.baseHand.travel.yPercent,
+          x: dismissalMotion.baseHand.travel.x,
+          y: dismissalMotion.baseHand.travel.y,
+          duration: dismissalMotion.baseHand.travel.duration,
+          ease: dismissalMotion.baseHand.travel.ease,
+          overwrite: false,
+        }, dismissalMotion.baseHand.travel.at)
         .to(textStage, {
           opacity: 0,
           duration: 0.22,
