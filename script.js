@@ -25,40 +25,53 @@ if (window.gsap) {
       highHand: {
         // Lower-left corner of HighHand.svg opaque bounds.
         transformOrigin: "17.24% 77.08%",
-        // Swapped from baseHand: immediate visible opening.
-        open: {
-          scale: 1.01,
-          rotation: 0,
-          xPercent: 6,
-          yPercent: 2.4,
-          x: 0,
-          y: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          at: 0,
+        // Both hands share the same pulse immediately on press, then rotation and travel start.
+        rotate: {
+          rotation: -90,
+          duration: 2.45,
+          ease: "none",
+          at: 0.3,
         },
-        // Swapped from baseHand: long diagonal fall toward the bottom-left.
-        exit: {
+        pulse: {
+          duration: 0.3,
+          ease: "sine.inOut",
+          at: 0,
+          keyframes: {
+            "55%": { scale: 1.045 },
+            "82%": { scale: 0.998 },
+            "100%": { scale: 1 },
+          },
+        },
+        travel: {
           scale: 1.08,
-          rotation: -45,
           xPercent: -18,
           yPercent: 82,
           x: () => window.innerWidth * -0.7,
           y: () => window.innerHeight * 1.02,
-          duration: 2.45,
-          ease: "power1.inOut",
-          delayAfterOpen: 0.22,
+          duration: 2.33,
+          ease: "none",
+          at: 0.42,
         },
       },
       baseHand: {
         // Lower-left corner of BaseHand.svg opaque bounds.
         transformOrigin: "56.4% 99.9%",
-        // The hand starts rotating immediately, then its diagonal travel fades in without a mid-motion stop.
+        // Both hands share the same pulse immediately on press, then rotation and travel start.
         rotate: {
           rotation: 70,
           duration: 6.45,
           ease: "none",
+          at: 0.3,
+        },
+        pulse: {
+          duration: 0.3,
+          ease: "sine.inOut",
           at: 0,
+          keyframes: {
+            "55%": { scale: 1.045 },
+            "82%": { scale: 0.998 },
+            "100%": { scale: 1 },
+          },
         },
         travel: {
           scale: 1.08,
@@ -68,7 +81,7 @@ if (window.gsap) {
           y: () => window.innerHeight * 1.02,
           duration: 7.05,
           ease: "none",
-          at: 0.12,
+          at: 0.42,
         },
       },
     };
@@ -183,7 +196,7 @@ if (window.gsap) {
     };
 
     const initMagneticButtons = () => {
-      if (!window.matchMedia("(pointer: fine)").matches || reduceMotion.matches) {
+      if (reduceMotion.matches) {
         return;
       }
 
@@ -191,56 +204,101 @@ if (window.gsap) {
 
       for (const button of magneticButtons) {
         let rafId = 0;
+        let activePointerId = null;
         const position = { x: 0, y: 0 };
 
         const render = () => {
-          button.style.transform = `translate3d(${position.x}px, ${position.y}px, 0)`;
+          gsap.set(button, {
+            x: position.x,
+            y: position.y,
+            force3D: true,
+          });
           rafId = 0;
         };
 
-        const onPointerMove = (event) => {
+        const queueRender = () => {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+          }
+
+          rafId = requestAnimationFrame(render);
+        };
+
+        const updateMagnetic = (event) => {
           if (dismissing) {
             return;
           }
 
           const rect = button.getBoundingClientRect();
-          const x = event.clientX - rect.left - (rect.width / 2);
-          const y = event.clientY - rect.top - (rect.height / 2);
+          const halfWidth = Math.max(rect.width / 2, 1);
+          const halfHeight = Math.max(rect.height / 2, 1);
+          const ratioX = gsap.utils.clamp(-1, 1, (event.clientX - rect.left - halfWidth) / halfWidth);
+          const ratioY = gsap.utils.clamp(-1, 1, (event.clientY - rect.top - halfHeight) / halfHeight);
+          const maxOffset = gsap.utils.clamp(8, 28, Math.min(rect.width, rect.height) * 0.14);
 
-          position.x = x * 0.22;
-          position.y = y * 0.22;
+          position.x = ratioX * maxOffset;
+          position.y = ratioY * maxOffset;
+
+          button.style.setProperty("--glass-x", `${(ratioX + 1) * 50}%`);
+          button.style.setProperty("--glass-y", `${(ratioY + 1) * 50}%`);
 
           gsap.to(textArt, {
-            xPercent: (x / rect.width) * 10,
-            yPercent: (y / rect.height) * 8,
-            rotation: (x / rect.width) * 5,
+            xPercent: ratioX * 10,
+            yPercent: ratioY * 8,
+            rotation: ratioX * 5,
             scaleX: 1.02,
             scaleY: 1.02,
-            duration: 0.22,
+            duration: event.pointerType === "mouse" ? 0.22 : 0.16,
             ease: "power3.out",
             overwrite: true,
           });
 
-          if (rafId) {
-            cancelAnimationFrame(rafId);
-          }
-
-          rafId = requestAnimationFrame(render);
+          queueRender();
         };
 
-        const onPointerLeave = () => {
+        const releaseMagnetic = () => {
+          activePointerId = null;
           position.x = 0;
           position.y = 0;
-
-          if (rafId) {
-            cancelAnimationFrame(rafId);
-          }
-
-          rafId = requestAnimationFrame(render);
+          hovering = false;
+          resetPress();
         };
 
+        const onPointerDown = (event) => {
+          activePointerId = event.pointerId;
+
+          if (event.pointerType !== "mouse" && button.setPointerCapture) {
+            button.setPointerCapture(event.pointerId);
+          }
+
+          updateMagnetic(event);
+        };
+
+        const onPointerMove = (event) => {
+          if (event.pointerType === "mouse" || activePointerId === event.pointerId) {
+            updateMagnetic(event);
+          }
+        };
+
+        const onPointerLeave = (event) => {
+          if (event.pointerType === "mouse") {
+            releaseMagnetic();
+          }
+        };
+
+        const onPointerEnd = (event) => {
+          if (activePointerId !== event.pointerId) {
+            return;
+          }
+
+          releaseMagnetic();
+        };
+
+        button.addEventListener("pointerdown", onPointerDown);
         button.addEventListener("pointermove", onPointerMove);
         button.addEventListener("pointerleave", onPointerLeave);
+        button.addEventListener("pointerup", onPointerEnd);
+        button.addEventListener("pointercancel", onPointerEnd);
       }
     };
 
@@ -263,10 +321,6 @@ if (window.gsap) {
       const timeline = gsap.timeline({
         defaults: { overwrite: true },
       });
-      const highHandExitAt =
-        dismissalMotion.highHand.open.at +
-        dismissalMotion.highHand.open.duration +
-        dismissalMotion.highHand.exit.delayAfterOpen;
 
       timeline
         .to(textArt, {
@@ -300,27 +354,28 @@ if (window.gsap) {
           duration: dismissalMotion.background.duration,
           ease: dismissalMotion.background.ease,
         }, dismissalMotion.background.at)
-        // highHand now gets baseHand's open + long diagonal exit behavior.
+        // highHand opens immediately on press and exits in the same continuous motion.
         .to(highHandLayer, {
-          scale: dismissalMotion.highHand.open.scale,
-          rotation: dismissalMotion.highHand.open.rotation,
-          xPercent: dismissalMotion.highHand.open.xPercent,
-          yPercent: dismissalMotion.highHand.open.yPercent,
-          x: dismissalMotion.highHand.open.x,
-          y: dismissalMotion.highHand.open.y,
-          duration: dismissalMotion.highHand.open.duration,
-          ease: dismissalMotion.highHand.open.ease,
-        }, dismissalMotion.highHand.open.at)
+          rotation: dismissalMotion.highHand.rotate.rotation,
+          duration: dismissalMotion.highHand.rotate.duration,
+          ease: dismissalMotion.highHand.rotate.ease,
+          overwrite: false,
+        }, dismissalMotion.highHand.rotate.at)
         .to(highHandLayer, {
-          scale: dismissalMotion.highHand.exit.scale,
-          rotation: dismissalMotion.highHand.exit.rotation,
-          xPercent: dismissalMotion.highHand.exit.xPercent,
-          yPercent: dismissalMotion.highHand.exit.yPercent,
-          x: dismissalMotion.highHand.exit.x,
-          y: dismissalMotion.highHand.exit.y,
-          duration: dismissalMotion.highHand.exit.duration,
-          ease: dismissalMotion.highHand.exit.ease,
-        }, highHandExitAt)
+          duration: dismissalMotion.highHand.pulse.duration,
+          ease: dismissalMotion.highHand.pulse.ease,
+          keyframes: dismissalMotion.highHand.pulse.keyframes,
+          overwrite: false,
+        }, dismissalMotion.highHand.pulse.at)
+        .to(highHandLayer, {
+          xPercent: dismissalMotion.highHand.travel.xPercent,
+          yPercent: dismissalMotion.highHand.travel.yPercent,
+          x: dismissalMotion.highHand.travel.x,
+          y: dismissalMotion.highHand.travel.y,
+          duration: dismissalMotion.highHand.travel.duration,
+          ease: dismissalMotion.highHand.travel.ease,
+          overwrite: false,
+        }, dismissalMotion.highHand.travel.at)
         // baseHand rotation starts first; the diagonal exit overlaps immediately after with no keyframe stop.
         .to(baseHandLayer, {
           rotation: dismissalMotion.baseHand.rotate.rotation,
@@ -329,7 +384,12 @@ if (window.gsap) {
           overwrite: false,
         }, dismissalMotion.baseHand.rotate.at)
         .to(baseHandLayer, {
-          scale: dismissalMotion.baseHand.travel.scale,
+          duration: dismissalMotion.baseHand.pulse.duration,
+          ease: dismissalMotion.baseHand.pulse.ease,
+          keyframes: dismissalMotion.baseHand.pulse.keyframes,
+          overwrite: false,
+        }, dismissalMotion.baseHand.pulse.at)
+        .to(baseHandLayer, {
           xPercent: dismissalMotion.baseHand.travel.xPercent,
           yPercent: dismissalMotion.baseHand.travel.yPercent,
           x: dismissalMotion.baseHand.travel.x,
@@ -346,7 +406,11 @@ if (window.gsap) {
         }, "<");
     };
 
-    textButton.addEventListener("pointerenter", () => {
+    textButton.addEventListener("pointerenter", (event) => {
+      if (event.pointerType !== "mouse") {
+        return;
+      }
+
       if (dismissing) {
         return;
       }
@@ -362,7 +426,11 @@ if (window.gsap) {
       });
     });
 
-    textButton.addEventListener("pointerleave", () => {
+    textButton.addEventListener("pointerleave", (event) => {
+      if (event.pointerType !== "mouse") {
+        return;
+      }
+
       hovering = false;
       resetPress();
     });
@@ -372,8 +440,10 @@ if (window.gsap) {
       resetPress();
     });
 
-    textButton.addEventListener("pointerdown", () => {
-      startDismissal();
+    textButton.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse") {
+        startDismissal();
+      }
     });
 
     textButton.addEventListener("click", () => {

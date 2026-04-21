@@ -142,7 +142,7 @@ body {
   appearance: none;
   overflow: visible;
   transform-origin: center center;
-  touch-action: manipulation;
+  touch-action: none;
   will-change: transform, opacity;
   --glass-x: 50%;
   --glass-y: 50%;
