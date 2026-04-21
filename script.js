@@ -28,7 +28,7 @@ if (window.gsap) {
         // Both hands share the same pulse immediately on press, then rotation and travel start.
         rotate: {
           rotation: -90,
-          duration: 2.45,
+          duration: 4.2,
           ease: "none",
           at: 0.3,
         },
@@ -48,7 +48,7 @@ if (window.gsap) {
           yPercent: 82,
           x: () => window.innerWidth * -0.7,
           y: () => window.innerHeight * 1.02,
-          duration: 2.33,
+          duration: 4.1,
           ease: "none",
           at: 0.42,
         },
