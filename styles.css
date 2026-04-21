@@ -4,6 +4,8 @@
 }
 
 :root {
+  --app-width: 100vw;
+  --app-height: 100svh;
   --foreground: 200 20% 95%;
   --primary: 199 89% 48%;
   --background: 210 50% 5%;
@@ -19,14 +21,25 @@
 
 html,
 body {
+  width: 100%;
   min-height: 100%;
+}
+
+body {
+  min-height: var(--app-height);
+  overflow: hidden;
+  background: #050a54;
+}
+
+main {
+  min-height: var(--app-height);
 }
 
 .hero {
   position: relative;
-  width: 100%;
-  min-height: 100svh;
-  height: 100svh;
+  width: var(--app-width);
+  min-height: var(--app-height);
+  height: var(--app-height);
   overflow: hidden;
   background: #051643;
 }
@@ -49,6 +62,19 @@ body {
 
 .hero__layer--background {
   z-index: 1;
+}
+
+.hero__layer--blue-transition {
+  z-index: 1;
+  background: #050a54;
+  opacity: 0;
+}
+
+.hero__layer--menu-home {
+  z-index: 1;
+  opacity: 0;
+  object-fit: fill;
+  transform-origin: center center;
 }
 
 .hero__layer--high-hand {
@@ -168,9 +194,14 @@ body {
 }
 
 @supports (height: 100dvh) {
-  .hero {
-    min-height: 100dvh;
-    height: 100dvh;
+  :root {
+    --app-height: 100dvh;
+  }
+}
+
+@supports (width: 100dvw) {
+  :root {
+    --app-width: 100dvw;
   }
 }
 

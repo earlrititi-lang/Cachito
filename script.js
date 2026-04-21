@@ -5,6 +5,8 @@ if (window.gsap) {
   const textButton = document.querySelector(".hero__text-button");
   const textArt = document.querySelector(".hero__layer--text");
   const backgroundLayer = document.querySelector(".hero__layer--background");
+  const blueTransitionLayer = document.querySelector(".hero__layer--blue-transition");
+  const menuHomeLayer = document.querySelector(".hero__layer--menu-home");
   const highHandLayer = document.querySelector(".hero__layer--high-hand");
   const baseHandLayer = document.querySelector(".hero__layer--base-hand");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -12,15 +14,40 @@ if (window.gsap) {
   let hovering = false;
   let boundsFrame = null;
 
-  if (hero && textStage && textButton && textArt) {
+  if (hero && textStage && textButton && textArt && backgroundLayer && blueTransitionLayer && menuHomeLayer && highHandLayer && baseHandLayer) {
+    const getViewportWidth = () => window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth;
+    const getViewportHeight = () => window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight;
+
+    const syncViewportSize = () => {
+      document.documentElement.style.setProperty("--app-width", `${getViewportWidth()}px`);
+      document.documentElement.style.setProperty("--app-height", `${getViewportHeight()}px`);
+    };
+
     // Configura aquí la salida de cada capa sin buscar tweens por el archivo.
     const dismissalMotion = {
       // Background zoom during dismissal.
       background: {
-        scale: 1.14,
-        duration: 2.4,
-        ease: "sine.inOut",
+        scale: 2.18,
+        yPercent: -38,
+        duration: 3.65,
+        ease: "power2.inOut",
         at: 0.04,
+      },
+      // Solid blue bridge that blends the zoomed hero into the menu scene.
+      blueTransition: {
+        opacity: 1,
+        duration: 2.1,
+        ease: "sine.inOut",
+        at: 0.9,
+      },
+      // Final scene destination: MenuHome fades in while zooming to full frame.
+      menuHome: {
+        fromScale: 0.98,
+        scale: 1,
+        opacity: 1,
+        duration: 1.75,
+        ease: "sine.inOut",
+        at: 2.9,
       },
       highHand: {
         // Lower-left corner of HighHand.svg opaque bounds.
@@ -46,8 +73,8 @@ if (window.gsap) {
           scale: 1.08,
           xPercent: -18,
           yPercent: 82,
-          x: () => window.innerWidth * -0.7,
-          y: () => window.innerHeight * 1.02,
+          x: () => getViewportWidth() * -0.7,
+          y: () => getViewportHeight() * 1.02,
           duration: 4.1,
           ease: "none",
           at: 0.42,
@@ -77,8 +104,8 @@ if (window.gsap) {
           scale: 1.08,
           xPercent: 42,
           yPercent: 96,
-          x: () => window.innerWidth * 0.9,
-          y: () => window.innerHeight * 1.02,
+          x: () => getViewportWidth() * 0.9,
+          y: () => getViewportHeight() * 1.02,
           duration: 7.05,
           ease: "none",
           at: 0.42,
@@ -89,6 +116,17 @@ if (window.gsap) {
     gsap.set([textStage, textButton, textArt], { force3D: true });
     gsap.set(backgroundLayer, {
       force3D: true,
+      transformOrigin: "50% 14%",
+      yPercent: 0,
+    });
+    gsap.set(blueTransitionLayer, {
+      force3D: true,
+      opacity: 0,
+    });
+    gsap.set(menuHomeLayer, {
+      force3D: true,
+      opacity: 0,
+      scale: dismissalMotion.menuHome.fromScale,
       transformOrigin: "center center",
     });
     gsap.set(highHandLayer, {
@@ -112,6 +150,7 @@ if (window.gsap) {
 
     const syncButtonToStage = () => {
       boundsFrame = null;
+      syncViewportSize();
 
       const heroRect = hero.getBoundingClientRect();
       const stageRect = textStage.getBoundingClientRect();
@@ -136,6 +175,7 @@ if (window.gsap) {
         return;
       }
 
+      syncViewportSize();
       boundsFrame = window.requestAnimationFrame(syncButtonToStage);
     };
 
@@ -146,6 +186,23 @@ if (window.gsap) {
 
       gsap.to(backgroundLayer, {
         scale: 1,
+        yPercent: 0,
+        opacity: 1,
+        duration: 0.55,
+        ease: "power2.out",
+        overwrite: true,
+      });
+
+      gsap.to(menuHomeLayer, {
+        opacity: 0,
+        scale: dismissalMotion.menuHome.fromScale,
+        duration: 0.55,
+        ease: "power2.out",
+        overwrite: true,
+      });
+
+      gsap.to(blueTransitionLayer, {
+        opacity: 0,
         duration: 0.55,
         ease: "power2.out",
         overwrite: true,
@@ -307,6 +364,8 @@ if (window.gsap) {
         return;
       }
 
+      syncViewportSize();
+      syncButtonToStage();
       dismissing = true;
       textButton.disabled = true;
 
@@ -351,9 +410,21 @@ if (window.gsap) {
         }, 0.08)
         .to(backgroundLayer, {
           scale: dismissalMotion.background.scale,
+          yPercent: dismissalMotion.background.yPercent,
           duration: dismissalMotion.background.duration,
           ease: dismissalMotion.background.ease,
         }, dismissalMotion.background.at)
+        .to(blueTransitionLayer, {
+          opacity: dismissalMotion.blueTransition.opacity,
+          duration: dismissalMotion.blueTransition.duration,
+          ease: dismissalMotion.blueTransition.ease,
+        }, dismissalMotion.blueTransition.at)
+        .to(menuHomeLayer, {
+          opacity: dismissalMotion.menuHome.opacity,
+          scale: dismissalMotion.menuHome.scale,
+          duration: dismissalMotion.menuHome.duration,
+          ease: dismissalMotion.menuHome.ease,
+        }, dismissalMotion.menuHome.at)
         // highHand opens immediately on press and exits in the same continuous motion.
         .to(highHandLayer, {
           rotation: dismissalMotion.highHand.rotate.rotation,
@@ -450,10 +521,12 @@ if (window.gsap) {
       startDismissal();
     });
 
+    syncViewportSize();
     syncButtonToStage();
     initMagneticButtons();
     window.addEventListener("resize", requestBoundsSync);
     window.addEventListener("orientationchange", requestBoundsSync);
     window.visualViewport?.addEventListener("resize", requestBoundsSync);
+    window.visualViewport?.addEventListener("scroll", requestBoundsSync);
   }
 }
